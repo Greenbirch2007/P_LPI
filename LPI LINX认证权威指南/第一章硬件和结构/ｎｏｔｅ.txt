@@ -244,3 +244,235 @@ sndconfig
 sndconfig是一个文字界面的工具，用与设定linux内核中的音频芯片
 模块。当你运行它是，sndconfig会试着侦探你的系统上有没有PnP设备，如果没有
 
+--help
+--noprobe
+--noautoconfig
+
+
+isapnp
+
+isapnp专用于支持PnP规格的ISA设备。它的配置文件(conffile)
+可以是普通的文本文件或"-"(从STDIN读入配置文件的内容)
+
+-h
+-花样百出比
+
+课题 1.101.4  设定SCSI设备
+
+SCSI是一种可同时支持流设备(例如扫描仪)与块式存储设备(例如硬盘，光盘)
+的接口。在服务器级的PC,Unix工作站以及较旧的Apple机种上，SCSI是标准配备。
+
+SCSI比IDE强的地方，在于其灵活性与扩充性很多，有较高的传输率
+
+
+SCSI总线可同时连接多个设备。SCSI总线是一条高质量的排线(用以并联内接设备)
+或一组菊链缆线（用以串联外接设备）
+整个总线的两端要安装终端电阻以及让信号形成回路，而且至少要有一个SCSI
+控制器(SCSI constroller),它是SCSI设备与主机之间的接口。
+所有SCSI设备（包括控制器本身）都有一个代表自己的标识符，
+称为SCSI地址(SCSI address) 或成SCSI ID,
+在同一个总线上不能出现重复的SCSI地址
+
+
+SCSI 的规格
+
+
+控制器绑CPU分担I/O工作在SCSI设备传输数据的期间，CPU本身是不介入的，
+而不像其他技术，CPU必须全程参与。
+就多任务效果而言，SCSI由于价格原因，不应该只出现于服务器的高级文件系统
+
+
+SCSI ID
+
+在SCSI总线上的每个设备(包括控制器本身)都有一个代表自己的地址，
+从总线上的地址线可读出目前占用总线的设备的地址i(二进制形式)
+
+同一总线上绝不绝不能出现ID相同的设备，在整个总线两端的设备也必须
+安装适当的终端电阻(termination)
+
+
+SCSI 逻辑单元编号
+
+
+有些复核型设备可细分成多个独立单元，例如RAID（可连接多个硬盘，
+使其成为一个逻辑上的大硬盘），光盘柜（有多个光盘的光驱）
+
+当SCSI控制器在初始化SCSI总线时会轮询各个设备。非符合型设备不汇报
+LUN或是固定汇报LUN 0
+
+
+Linux的SCSI磁盘设备文件
+
+在linux系统，IDE磁盘的设备文件是
+/dev/hda
+/dev/hdb
+/dev/hdc
+
+在SCSI设备文件名称末尾的编号是依照单一ID/LUN组合上的分区顺序ICI编排
+
+SCSI设备的各种代号
+
+如果SCSI总线上有可开机的磁盘，要将该磁盘的SCSI ID调整为0
+或进入SCSI控制器的BIOS来指定可开机磁盘的SCSI ID
+
+
+终端电阻
+SCSI BIOS
+
+当PC开机时，系统的BIOS会优先执行，然后才会执行附加卡上的BIOS
+在PC开机画面上，SCSI BIOS的信息是出现在系统BIOS的信息之后
+大多数SCSI BIOS会在开机时提示你一个按键组合，
+控制器本身的SCSI地址
+
+默认的开机设备
+
+内置的终端电阻
+SCSI总线速度
+
+课题1.101.5 扩展卡的安装与设定
+
+安装扩展卡时，要处理如何错开各扩展卡占用的硬件资源(IO端口，IRQ,DMA)
+
+
+使用/proc文件系统
+
+
+在安装新硬件到linux系统之前，会要知道当前系统的资源配置状况。
+linux将这类信息全集中在/proc文件系统下。
+/proc目录下的文件都是linux内核虚拟出来的，
+当你读取它们时，内核会实时提供文件内容。
+
+分别查出系统的中断请求(IRQ),DMA信道，I/O端口使用状况，
+PCI总线的状态
+
+声卡 ISA
+网卡  PCI
+
+cat /proc/dma
+cat /proc/ioports
+
+从/proc/pci文件可查出PCI总线的状况。
+也可以使用lspci来查询
+
+应该记住标准配备(键盘，鼠标,IDE接口，串行端口，并行端口)的默认
+资源配置状况，并知道如何利用/proc文件系统调查系统当前的资源使用情况
+
+
+
+ISA PnP
+
+在Linux系统上，要安装ISAPnPTools包
+，然后pnpdump与isapnp工具完成资源配置情况，可以看到各个ISA PnP设备所需
+的资源(IO端口，IRQ,DMA通道)。
+pnpdump输出的信息的格式被科技安排成isapnp可解读的格式。
+
+isapnp依据/etc/isapnp.conf配置文件(通常由pnpdump产生)来设定ISA PnP卡
+
+
+
+cat /proc/interrupts
+
+课题1.101.6 设定通信接口设备
+
+如何设定串行端口以及如何设定调制解调器
+
+
+课题 1.101.7  谁定USB设备
+
+
+USB(Universal Serial Bus,通用串行总线)是现代PC上常见的“外部”总线，
+主要用于连接可以热插拔(hot plugable)的外接设备，包括键盘，鼠标，
+数码相机，扫描仪，打印机以及其他
+
+linux对于USB的支持以及如何设定USB设备
+
+
+USB的结构，是树状，Hub---Device
+
+比较新的PC现在都内置好几个USB主控制器，每个主控制器都可以作为一个“root hub”
+一个USB hub(集线器)通常会提供若干个外接孔，用于连接其他USB设备或是
+再串接另一个hub.
+USB设备本身可以使用总线上的电泳，也可以使用外接的电源
+
+USB 主控器
+
+
+从软件角度，
+
+USB主控器可分成三种规格：
+
+1.OHCI(Open Host Controller Interface)
+2.UHCI(Universal Host Controller Interface)
+3.EHCI( Enhanced Host Controller Interface)
+
+考点，要知道USB主控器的规格
+
+
+
+USB设备 按照，功能性，可分为：
+
+1.HID(Human Interface Device)
+
+鼠标，键盘之类的输入设备
+通信 调制解调器
+大容器存储设备 (Mass Storage Device)   磁盘，卡片阅读机
+
+音频  音频设备
+
+IrDA  红外线传输设备
+
+打印机  打印机以及USB-to-paraller缆线
+
+不同种类的USB设备各需要专属的驱动程序
+
+
+USB驱动程序
+
+linux内核对于USB的支持，扣掉了对USB大量存储设备的支持，
+
+linux内核的USB驱动程序，可分为三类
+
+1. 主控器模块
+
+用于驱动USB主控器，必须依据内核的版本与控制器的规格来选择适当的驱动模块
+
+
+2. 类别模块
+
+针对不同性质USB设备所写的驱动程序。
+
+3. 难以归类的模块
+
+linux内核里的USB子系统采取分层式设计。最内层usbcore.
+它是一个纯软件接口，用于支持所有较高级的模块(包括 USB HCD 与HUB在内)
+HCD在中间层，最外层是类别模块或个别设备的模块
+
+
+依据USB主控器的形式，判断应该加载哪一个驱动模块，
+
+modprobe ehci-hcd
+
+如果没有错误信息，可以猜测ehci-hcd模块已经被顺利链接进内核里，
+
+lsmod
+
+或观察dmesg的输出信息可以
+
+dmesg | grep -i ehci
+
+加载了USB host controller 的驱动模块之后，才可以加载USB设备的驱动模块
+
+以下是一个安装了多个USB设备的系统的/proc/modules的样子
+
+(使用lsmod也可以看到同样的结果)
+
+USB热插拔
+
+USB设备的特性是可以热插拔，它们的驱动程序通常不是直接被编译进内核里，
+而是以模块的形式存在，以便配合/sbin/hoplug热插拔机制
+与实施加载，卸载USB设备的模块
+
+
+p47
+第二章  linux安装与包管理
+
