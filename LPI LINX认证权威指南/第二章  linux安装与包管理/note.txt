@@ -711,9 +711,459 @@ gzip,tar的用法
 
 
 102.4 共享函数库的管理
-p63
+大多数程序都需要样一些共同的功能，比如文件操作(开启，关闭，读写)
+内存管理(配置，释放)，基本数学运算(三角函数，等)
+
+共享函数库(shared library)含有各种程序都需要的通用函数，
+可供程序在运行时调用(称为"链接")或是嵌入程序的可执行文件(称为“静态链接”)
+
+比如，几乎每个c程序都会用到的printf()函数就是被存储在共享函数库中的“
+”库函数“(library function)之一
+
+
+静态链接的好处，是程序可被直接搬移到另一个同质系统而不必重新编译，
+缺点是它们的体积比较庞大，需要较多的内存。动态链接的优缺点
+刚好与静态链接互补：所浪费的内存较少(特别是同时运行多个动态
+链接的程序且它们共享许多通用函数时)，但是如果将程序文件
+搬移到另一个系统，却不一定能够顺利运行
+
+共享函数库的依赖关系
+
+动态链接的程序通常需要用到一个以上的共享函数库。若所需的函数库
+不存在或是无法被找到，程序就无法运行。
+只要安装正确的函数库，就能解决问题。
+ldd工具可让你判断执行特定文件所需的函数库
+
+ldd
+
+列出programs所需的函数库，包括函数库的名称以及所需函数在函数库中的
+相对位置
+
+
+ldd /usr/bin/go
+
+
+链接共享函数库
+
+当你运行动态链接的程序时，ld.so(shared object dynamic linker)
+会检验该程序文件，找出该程序与共享函数库之间的依赖关系，
+试着加载能满足"unresolved link"的共享函数库。
+倘若ld.so不能找出指定的函数库，改程序将无法运行
+
+当ld.so在搜寻函数库时，会优先到/lib与/usr/lib/这两个目录下
+取寻找。若要让ld.so到其他目录(例如/usr/local/lib/)去搜寻
+函数库，则你必须将新目录的完整路径加到LD_LIBRARY_PATH环境变量
+(目录之间以冒号分隔)或写在/etc/ld.so/conf配置文件中
+(每个路径各占一行)
+
+
+每当你修改了/etc/ld.so.conf配置文件，都应该执行一次ldconfig,
+
+使其产生新的/etc/ld.so.cache高速缓存文件
+
+
+ldconfig
+
+
+ldconfig [options] lib_dirs
+
+
+说明　依据/etc/ld.so.conf配置文件以及给定的lib_dirs,重建新的
+/etc/ld.so.cache高速缓存文件
+
+ldconfig -p 只查看高速缓存内容，不进行任何修改
+ldconfig　-v  详细列出执行期间的过程和进度
+
+
+查看ld.so.cache 索引文件的内容
+
+
+ldconfig -p | less
+
+检查ld.so.cache是否包含特定函数库
+
+ldconfig -p | grep sas
+
+
+重建ld.so.cache索引文件
+
+echo /usr/local/lib >> /etc/ld.so.conf
+ldconfig
+
+
+
+102.5 Debian包管理系统
+
+
+Debian　Linux其包管理系统称为"Advanced Package Tools"(APT)
+是一组可自动取得，管理Debian包的工具的组合
+
+Debian包
+
+每个Debian包都包含了程序，配置文件，说明文件以及一个描述包依赖
+关系的内文件。
+
+Debian文件本身的名称由三部分组成，分别是：
+
+１.包名
+
+	比如，binutils,kernel-source,telnet都是典型的名称格式
+2. 版本编号
+	每个包都有一个版本编号，代表所含软件的版本
+3.扩展名
+	所有Debian包文件的扩展名都是.deb
+
+
+package_1.0-2.deb
+
+包名_软件版本-修改版次.副文件名
+
+
+Debian GNU/Linux包名的结构
+
+Debian包管理工具
+
+dpkg,直接操作.deb包文件，可自动安装，维护软件包。
+
+dpkg的一个替代工具是apt-get,它的操作对象是"包名"而非包文件本身
+
+apt-get 会自动从预定的来源(CD-ROM,FTP站点等)取得所指定的包并
+完成后续的安装工作。这两个工具都是用于命令行环境
+
+
+dselect提供一个互动菜单，让管理这可从一系列可用包中挑选，
+一次可选出多个想要安装的包。
+alien可用来处理非Debian格式的包，像是Red Hat的RPM格式
+
+dpkg是Debian包管理系统的基本工具，它依据指定的action作为主要操作
+模式，并参考选择型的option来修正action的行为
+
+dpkg会维护/var/lib/dpkg/目录下的包信息，此目录下有两个值值得注意的文件
+
+available  列出所有可用的包
+
+status　记录包的属性，像是否已经安装过或是标示成要移除等
+
+
+dpkg,select,apt-get 会自动修改这些文件，
+
+dpkg　-E
+dpkg -G
+dpkg -R(-- recursive)
+dpkg --configure　package
+dpkg -i package_file( --install package_file)
+dpkg -l[pattern](--list [pattern])
+dpkg -L package(--listfiles package)
+dpkg --print-avail package
+dpkg --purge package
+dpkg -r package(--remove package)
+dpkg -s package(--status package)
+dpkg -S search_pattern(--search search_pattern)
+dpkg --unpack package_file
 
 
 
 
+
+dpkg　-E
+
+要求dpkg不要覆盖先前安装的同版本包
+
+dpkg -G
+
+要求dpkg不要以交旧版本或同版本包覆盖已安装的包
+
+
+dpkg -R(-- recursive)
+
+递归处理指定子目录下的所有包文件。
+
+dpkg --configure　package
+
+设定一个尚未包装的包。这需要事先准备好几个配置文件
+
+dpkg -i package_file( --install package_file)
+
+安装package_file所含的包。安装程序会自动备份旧文件，解开
+封装文件，安装新文件，将配置文件放在适当位置
+
+
+
+dpkg -l[pattern](--list [pattern])
+
+在已安装的包中，找出名称与pattern匹配的包并显示它们的信息
+
+dpkg -L package(--listfiles package)
+
+列出会安装package的文件
+
+dpkg --print-avail package
+
+在/var/lib/dpkg/avaiable文件里找出关于package的详细信息
+
+
+dpkg --purge package
+
+移除所安装的任何package文件
+
+dpkg -r package(--remove package)
+
+移除所安装的package文件，只保留配置文件
+
+
+dpkg -s package(--status package)
+
+报告package的状态
+
+
+dpkg -S search_pattern(--search search_pattern)
+
+
+从已安装的包中，找出文件名匹配search_pattern模式者
+
+
+dpkg --unpack package_file
+
+
+只解开package_file,不安装其中所含的包
+
+
+1.使用dpkg -i 安装一个已放在个人目录下的包文件
+
+dpkg -i da.deb
+
+2. 升级一个包与安装一个新包
+
+dpkg　-G da.deb
+
+
+3. dpkg -r , dpkg --purge 移除一个包
+
+
+４．使用　dpkg -S命令找出含有特定文件的包
+
+apt-get 文件是封装在apt包中
+
+
+５．dpkg　-s查询包的状态信息，像是版本，内容，依赖性，整体性，
+是否已安装在系统上
+
+dpkg -s apt
+
+
+6.使用dpkg -L列出某包所含的全部文件。
+可用grep过滤其输出，或将其输出传给less，以便查看
+
+
+dpkg -L apt | grep '^/usr/bin'
+
+
+7. 使用dpkg　-l 列出已安装的包，
+如果没有指定一个名称模式，则所有包都会被列出来
+
+dpkg　-l xdm
+
+
+8. 使用dpkg　-S　查出特定文件所属的包
+
+
+dpkg -S /usr/bin/n1
+
+apt-get  [options] [command] [package_name...]
+
+apt-get是Advanced Package Tool(APT)管理系统的一部分，
+不同于dpkg,
+apt-get并非直接处理.deb文件，它的处理底下那个是"包名"
+apt-get将包的所有信息全集中在一个数据库并自动维护此数据库，
+借此，apt-get可自动升级包版本并在新版包发行是自动维护其依赖性
+
+apt-get　-d
+
+
+	只下载文件，不安装。
+apt-get -s
+	只模拟改变包的步骤，不实际变更系统
+
+apt-get -y
+	自动对所有问题回答"yes"
+
+
+
+apt-get dist-upgrade
+ 	自动升级到新版Debian Linux
+
+apt-get intall
+	用于安装一个或多个包(依赖包名)
+apt-get remove
+	用于移除指定的包
+
+apt-get update
+	取得当前可用的包的列表。这个动作通常是在对任何现有包
+	做任何改变之前完成
+
+apt-get upgrade
+	将系统的完整包集合安全地升级到当前的而最新版本
+
+apt-get使用/apt/sources.list文件来决定应该到何处取得包
+
+
+
+apt-get remove elvis
+
+
+dselect 
+
+
+dselect提供一个菜单画面与用户交互。
+
+alien [--to-deb] [--path=patchfile] [options] file
+
+
+alien 将非Debian格式的包转换成Debian格式或直接可安装的包
+
+Red Hat 的.rpm
+alien 命令默认行为会在完成转换之后产生一个Debian格式的包
+
+alien　-i 完成转换后自动安葬所产生的包，并移除已被转换过的其他格式的包
+
+在Debian系统上安装一个RPM包
+alien　-i package.rpm
+
+
+Debian包管理用具有３个：dselect,apt-get,alien，
+考试重点在dpkg
+
+
+102.6 Red Hat包管理系统
+
+RPM的作用是让软件包的而安装与维护自动化。包文件封装了程序恩建，配置文件，说明呢间
+以及与其他包的依赖关系的而叙述。
+不同于Debian　APT系统的多样化的工具组合，
+RPM几种在rpm
+RPM将包信息记录在一个数据库，每当用rpm安装或移除包时，该数据库会自动更新
+
+RPM文件名有四部分组成
+
+
+包名
+	RPM包的简短说明
+版本编号
+	每个包都有一个版本编号
+结构名
+	
+扩展名
+	所有RPM包的默认扩展名是.rpm
+
+package-1.0-2.i386.rpm
+
+
+名称-版本-发行版次.架构.rpm
+
+使用rpm
+
+
+
+rpm -i(rpm --install) 安装模式
+rpm -U(rpm --upgrade)　升级模式
+rpm -e(--uninstall)　卸载安装模式
+rpm -q(--query)　查询模式
+rpm -V 　检验模式
+
+
+
+
+rpm　--force  允许覆盖现有的包或已安装包的文件
+rpm -h(--hash)　在安装或升级过程，用50个字号(#)表示操作进度
+rpm --nodeps　忽略依赖性检查
+rpm --test　模拟真个过程的每一个动作，但不实际修改文件
+rpm -v　在进行任何动作时都输出详细的嘻嘻
+rpm -vv 更彻底的详细模式
+
+安装并显示详细信息
+rpm -iv d.rpm
+
+升级
+rpm -U r.rpm
+
+卸载模式
+
+rpm  --nodeps
+rpm --test
+
+
+rpm -e 
+
+
+查询模式
+
+
+-a(-all)　列出已安装在系统上的所有包
+-f filename(同-file)查询特定文件所属的包
+-p package_filename 查询指定的包文件
+
+
+选择查询内容的选项
+
+-c(--configfiles)
+	只列出配置文件
+-d(--docfiles)
+	只列出说明文件
+-i package
+	显示包文件的信息
+
+-l package(同--list)
+	列出所指定包的所有文件
+
+-R(--requires)
+	列出与该包相依的所有相关包
+
+１．查询某RPM文件
+
+rpm -qpi er.rpm | grep Vendor
+
+2. 进入查询模式，列出特定包文件所包含的所有文件
+
+
+rpm -qlp a.rpm | more
+
+
+若查询对象是已安装的包，则使用-l选项查询其包名:
+
+rpm -ql sendmail
+
+3. 列出某包的文档文件：
+
+
+rpm -qd at
+
+4. 列出某包所含的配置文件或脚本(script)
+
+
+rpm -qc at
+
+
+5.判定某特定文件所属的包。
+
+
+rpm -qf /etc/issue
+
+6.列出已安装在系统上的"全部"包
+
+rpm -qa | grep kernel
+
+
+检验模式的常用
+
+
+--nofiles
+	不理会遗失的文件
+
+--nomd5
+	不理会MD5检验和错误
+--nopgp
+
+	不理会PGP检查错误
+
+
+实际考试准备rpm的操作！
 
