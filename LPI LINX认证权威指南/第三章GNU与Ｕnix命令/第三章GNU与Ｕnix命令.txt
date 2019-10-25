@@ -463,6 +463,664 @@ find也允许使用其他条件来搜索文件，像是问价你的最后一次�
 递归执行赋予了单一交谈式命令强大的能力，让它可以跨越当前目录(current directory)
 
 103.2 使用过滤器处理字符串流
-p94
+
+linux系统上有很多统称为过滤器(filter)的工具，它们可以从自己的标准输入(stdin)
+或其他文件送入字符串流(text stream)加以修正，最后送往标准输出(stdout)
+或存入新文件。
+
+可用管道(pipe)将不同功能的过滤器串接在一起，使他们通力达成单个
+过滤器办不到的修整效果。
 
 
+cut 
+
+cut options [files]
+
+说明
+
+将输入行的特定字段"裁切"出来(显示出来)。在默认情况下，cut将tab视为
+字段分隔字符，除非你以-d选项执行其他分隔字符。cut影响原始输入文件
+
+
+常用选项
+
+
+cut -d list
+cut -c list
+cut -d delim
+cut -f list
+
+
+
+cut -d list
+
+	显示出位于list所指定位置的字节。list是一连串以逗号分隔的数字，
+		位置是以byte为计算单位
+	
+cut -c list
+
+	显示出位于list所指位置的字符。list是一连串以逗号分隔的数字，
+	位置是以column(字段)为计算单位
+
+cut -d delim
+
+	定义字段分隔符为delim字符
+cut -f list
+
+	显示出list所列出的字段。list是一连串以逗号分隔的数字，代表字段你的编号
+
+
+例子
+
+
+1.显示/etc/passwd文件(以冒号作为分隔符)中的第一个字段(用户名称)
+
+cut -d: -f1 /etc/passwd
+
+2.显示/etc/passwd 文件每行的第一个字段
+
+
+cut -c 1 /etc/passwd
+
+
+expand 
+
+	expand [options] files
+
+说明
+	将输入流中的tab字符转换成等宽的若干个space字符。虽然tab有助于
+	排齐文本，但并非所有输出设备对于tab的解释都一样。所以，在某终端
+	机(或编辑器)上在其他地方可能很乱，解决办法是将tab字符换成适当
+	数量的space字符。
+	在默认情况下，expand假设一个tab字符的定位效果相当于8个空格
+
+常用选项
+
+
+expand -t number
+expand -i
+
+
+expand -t number
+
+	指定tab字符的等效空格宽度(默认值为８)
+
+expand -i
+	只转换出现在行首的tab字符
+
+
+fmt 
+	fmt [options] [files]
+
+说明
+	将文稿编排成指定的宽度。过长的行会被换到下一行(安插一个\n字符)，
+	过短的行会被连接到前一行末尾(移除前一行末尾的\n字符)。
+	如果同时指定多个文件，则将所有文件的内容都视为连续的字符串流
+
+
+常用选项
+
+fmt -u
+fmt -w width
+
+
+fmt -u
+	使用一致的间隔方式：单字(词)之间隔１个空格，句子之间间隔2个空格
+
+fmt -w width
+	将版面宽度(每行的字数)设为width,默认为75
+
+
+head 
+	head [options] [files]
+
+
+说明
+	显示出文件开头的前几行，。若同时指定多个文件，于每个文件开头处内容
+	之前会多显示一个标头，以便区分
+
+
+head -c n
+head -n m
+
+
+head -c n
+	显示出前n个字节的内容。若n后面附加了k或m,则计算单位将会相应变成
+	千字节(KB)或兆字节(MB)
+
+head -n m
+	显示出头m行的内容，默认值为10
+
+
+
+join
+
+	join [options] file1 file2
+
+
+说明
+
+	依据所指定的字段将来自file1与file2的两个表格合并成一个表格
+
+
+join -j1 nfield
+	索引字段为file1的第nfield个字段
+
+join -j2 nfield
+	索引字段为file1的第nfield个字段
+join -j field
+	将file1与file2共同的field视为索引字段
+
+
+
+范例
+
+join -j 1 file1 file2
+
+
+nl
+
+	nl [options] [files]
+
+说明
+
+	为files里的每一行加上行号。nl主要是用于给"正文"编行号，
+	所以它提供了特殊的页眉(header)与页脚(footer)选项，让你
+	将这些原本不应该被编号的文本行排除在外。
+	每个逻辑页面(logical page)的第一行的内容编号为1
+	一个逻辑页眉是由页眉，内容，页脚三个部分组成，
+	这三个部分依次序由特殊字符串 \:
+	
+常用选项
+
+
+nl -b style
+nl -f style
+nl -h style
+nl a
+nl t
+nl n
+
+
+nl -b style
+	设定内容的编号方式，默认方式为t(只有非空白才有编号)
+nl -f style
+	设定页脚的编号方式，默认方式为n(无编号)
+nl -h style
+	设定页眉的编号方式，默认方式为n(无编号)
+
+各种编号方式如下：
+
+nl a
+	全部编号，包括空白行
+	
+nl t
+	只编号非空白行
+nl n
+	完全不编号
+
+pREGEXP  
+	只有匹配REGEXP正则表达式的文本行才编号
+
+
+范例
+
+
+假设文件file1的内容如下
+
+nl -h a file1
+
+只有页眉与内容才有编号，而页脚没有。每隔一个逻辑页面就会重新编号
+
+od
+	od [options] [files]
+
+说明
+	以八进制(octal)数值格式显示文件内容。od主要用于显示binary文件
+	的字节编码。除了八进制之外，也可以选择ASCII,十六进制等表示格式。
+
+
+常用选项
+
+od -t type
+od -ta
+od -tc
+od -to
+od -tx
+
+
+od -t type
+	选择字节的表示格式。各种type的意义如下
+od -ta
+	字符名称(例如，00表示nul)
+od -tc
+	ASCII或backslash escape(例如，00表示成\0,65表示成A)
+od -to
+	八进制数值(默认)
+
+od -tx
+	十六进制数值
+
+
+文本中的内容
+\n 是ASCII newline字符。以a格式显示此文件
+
+od -t a file1
+
+每行开头的那一长串八进制数值的数字代表该行数据在文件中的相对位置，其后才是
+数据本身的表达方式。由于我们要求以"字符名称"来表示，所以\n被显示为nl(new line的缩写)
+
+paste
+
+	paste [options] files
+
+说明
+将一个或多个文件的内容横向排列在一起。每个输入文件的第一行都将称为
+合并结果的第一行的独立字段
+
+
+常用选项
+
+
+paste -d "n"
+
+paste -s
+
+
+
+paste -d "n"
+	以n为字段分隔字符(默认的分隔字符是tab)
+
+paste -s
+	将输入文件的内容纵向列在一起。有多个输入文件时，每个文件的内容自称一行
+
+
+
+合并两个文件的内容，pastee所产生的输出(横向排列)为：
+
+paste f1 f2
+
+使用-s选项时，paste所产生的输出(纵向排列)为
+
+paste -s f1 f2
+
+
+使用-d选项将字段分隔字符从tab改为@
+
+
+paste -d '@' f1 f2
+
+
+
+pr
+	pr [options] [file]
+
+说明
+
+将文本文件的内容转换成分页，分段的版本，并且另外加上页眉与页尾。
+页眉可还有日期，时间，文件名以及页码的等信息。
+pr主要用于在"原样打印机"(没有打印机语言的原始打印机)产生漂亮的
+输出字符串流
+
+
+常用
+
+pr -d
+pr -h header
+pr -l lines
+pr -o width
+
+
+pr -d
+	两倍间距
+pr -h header
+	以header替换页眉中的文件名
+
+pr -l lines
+	将页面的长度设为lines,默认为66行，最低为10行
+	
+pr -o width
+	将页面左边留白宽度设定为width
+
+
+sort
+
+	sort [options] [files]
+
+说明
+读取输入内容，以字母顺序(或你指定的其他顺序)输出它们
+
+常用选项
+sort -f 
+sort -n
+sort -r
+sort -kpos1[,pos2]
+sort -t 
+sep为区别键值的分隔字符(默认值为空格符)
+
+sort -f 
+	不区分大小写字母的差异
+sort -n
+	以数值顺序排列
+sort -r
+	以相反顺序排列。不指定-r选项时，默认以升序排列
+
+sort -kpos1[,pos2]
+	以位于pos1(到pos2)的键值为排序依据
+sort -t　sep
+	
+sep为区别键值的分隔字符(默认值为空格符)
+
+
+
+例子
+１．显示系统进程，以常驻部分的大小(ps输出信息中的RSS字段)顺序列出它们
+
+
+ps aux | sort -k 6 -n
+
+
+split
+	split [options] [infile] [outfile]
+
+说明
+split可将大文件分割成若干个小文件。它先读出infile的内容，每隔1000行
+(或你指定的行数)就写入一个新文件。
+新文件以outfileaa,outfileab,等顺序来命名
+
+
+以往通过电子邮件发送大型文件时，常会用此命令将大文件分割成一组
+小文件以便分开发送。因为一次发送整个大型的电子邮件信息被视为一种不友善的行为
+
+
+常用选项
+
+split -n 
+	每隔n(默认值为1000)行就分成一个新文件
+
+
+split -2 file1 splitout_
+
+
+将会产生三个新文件:splitout_aa,splitout_ab与splitout_ac
+
+tac
+
+	tac [file]
+
+说明
+
+	颠倒输入行的顺序，刚好与cat命令的效果相反(所以取名为tac)
+
+范例
+
+tac file1
+
+
+tail
+	tail [options] [files]
+
+说明
+显示出一个或多个文件中的最后几行。同时指定多个文件时，于每个文件的内容
+之前会先出现该文件的文件名以作区分
+
+
+常用选项
+
+tail -c n
+tail -f
+tail -n m
+
+
+tail -c n
+	显示出文件中最后n个字节的内容，若n后面附加了k或m,则计数单位将会相应
+	变成千字节(KB)或兆字节(MB)
+tail -f
+	显示出文件尾端内容后不关闭输入文件，并且在输入文件的末端出现新呢荣
+	时实时将它们显示出来。管理者常用此选项来持续观察日志文件的内容变化情况
+tail -n m
+
+	显示出最后m行的内容，默认值为１０
+
+
+tr
+	tr [options] [[string1 [string2]]
+
+
+说明
+将string1里的字符转译成string2里相应的字符。tr本身没有file自变量，其数据
+来源固定为stdin,输出目标固定为stdout.
+如果string1与string2是范围的形式(a-z或A-Z),那么这两个范围所涵盖的
+字符树木必须相同
+
+string1和string2都可以含有多种特殊字符
+
+
+a-z 从a到z的所有字符
+\\　代表\字符本身
+\nnn　ASCII编码值为nnn(八进制表示法)　的字符
+\x　各种控制字符
+\a　响铃(bell)
+\b 倒退(backspace)
+\f 进纸(form feed)
+\n 换行(new line)
+\r 回车(carriage return)
+\t 横跳格(tab)
+\v 纵跳格(vertical tab)
+
+
+[:class:] POSIX字符类组
+[:alnum:]　字母数字(字母与数字)
+[:alpha:]　字母
+[:blank:]　空格(space或tab)
+[:cntrl:] 控制字符
+[:digit:]　数字
+[:graph:]　可显示字符(不含space)
+[:lower:] 小写字母
+[:print:]　所有可显示字符(含space)
+[:punct:] 标点符号
+[:space:]　任何空格符
+[:upper:]　大写字母
+[:xdigit:]十六进制数字
+
+
+常用选项
+
+
+tr -c
+tr -d
+tr -s
+
+
+tr -c
+	以相反意义解释string1
+tr -d
+	丢弃出现于string1中的任何字符
+
+tr -s
+	若输入数据中连续出现string1所含的任一字符，则将连续字符挤压(squeeze)
+	到只剩一个
+
+
+范例
+
+
+１．将f1中的所有小写字符转换成大写字符
+
+cat f1 | tr a-z A-Z
+
+
+或
+
+tr a-z A-Z < f1
+
+
+２．　消除f1中连续的字符a(只留下一个):
+cat f1 | tr -s a
+
+
+3. 移除f1中所有的字符a,b,c:
+
+cat f1 | tr -d abc
+
+
+
+unexpand
+	unexpand [options] [files]
+
+
+说明
+将输入文件中的space字符转换成tab字符。默认情况下，它假设tab的位置
+是相隔８个space字符
+
+
+常用选项
+
+
+unexpand -a
+unexpand -t number
+
+
+unexpand -a
+	转换所有space,而非只有每行开头处的space.通常，unexpand不会动刀
+	正规文字开始之后的空格
+
+unexpand -t number
+	指定tab空白宽度(默认为8)
+
+
+
+uniq
+
+	uniq [options] [input[output]]
+
+
+说明
+
+读入stdin,消除连续的相同文本行，然后写到stdout.由于uniq只处理相邻的文本
+行，所以通常搭配sort一起使用(sort可使所有相同的文本行都聚集在一起)
+
+
+常用选项
+
+uniq -d
+uniq -u
+
+
+uniq -d
+	只显示出有重复的文本行
+uniq -u
+	只显示出不重复的文本航
+
+
+剔除重复的
+
+uniq f1
+
+
+
+因为uniq只处理相邻的重复行。要彻底消除输入文件中的所有重复行，
+必须事先用sort将重复行整并在一起：
+
+sort file | uniq
+
+若想查出哪些行是重复的，可以使用-d选项
+
+sort file | uniq -d
+
+
+
+wc
+
+	wc [options] [files]
+
+说明
+计算files文件内容的字符数(char),单词数(word)与行数(line).
+同时指定多个文件时，则分别统计各个文件的字数并分行显示各文件的
+数据，最后一行则显示各项累加值
+
+
+常用选项
+
+wc -c
+wc -l
+wc -w
+
+wc -c
+	只显示出字符数
+wc -l	
+	只显示出行数
+wc -w
+	只显示出单词数
+
+
+例子
+
+1.命令统计f1,f2,f3，这三个文件的字符数，行数，单词数以及三项数据的综合
+
+
+wc f[123]
+
+
+2.计算当前工作目录下有多少个文件
+
+ls | wc -l
+
+先用ls列出当前工作目录下的文件，然后利用wc计算行数的能力计算出文件数
+
+
+xargs
+
+	xargs [options] [other_cmd]  [initial_arguments]
+
+说明
+将来自stdin的数据逐一作为other_cmd的自变量，逐次执行新构成的命令，
+直到耗尽stdin为止。如果要执行的新命令有固定的选项或参数，则可以在
+initial_arguments予以指定。从stdion读入的参数会接在initial_arguments之后
+
+xargs主要是用来解决命令行过长的问题
+或需要从其他命令的执行结果得到所要执行命令的自变量
+
+
+常用选项
+
+
+xargs -n maxargs
+xargs -p
+
+
+xargs -n maxargs
+	限制每次传给other_cmd的额外自变量的数量
+xargs -p
+	交互模式。执行新构成的other_cmd之前会提示用户进行确认
+
+
+
+范例
+
+1.要想用rm删除某个目录下的所有文件,rm *
+
+如果文件太多，可能超过shell能接受的命令行长度限制。
+ls | xargs rm
+
+
+2. 要在不同位置的文件中找出含有特定字符串(例如,"gg")的文件。
+用于匹配文件内容的工具是grep
+但是所需的文件名自变量刚好是要寻找的对象。
+对于这种情况，可用find列出搜索范围内的所有文件，
+然后通过管道由xargs代为产生并执行grep命令来匹配字符串
+
+
+find / -type f | xargs -n 1 grep gg
+
+
+
+
+上面的例子，find从根目录(/)找出type(类型)为f(文件)的文件(排除目录，链接
+socket等特殊文件)，每当xargs从自己的stdin(已被管道接到find的stdout)
+得到一个文件名(因为-n 1的关系)时，
+就构建并执行了一次grep gg　filename命令
+
+１０３．３　基本的文件管理技巧
+
+p112
