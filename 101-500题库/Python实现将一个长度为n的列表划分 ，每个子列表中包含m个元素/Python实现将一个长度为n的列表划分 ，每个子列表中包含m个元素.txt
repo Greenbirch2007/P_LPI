@@ -1,0 +1,35 @@
+Python实现将一个长度为n的列表划分 ，每个子列表中包含m个元素
+https://blog.csdn.net/Together_CZ/article/details/79820261
+
+    今天写一个任务调度分发模块的时候遇上一个需求就是，需要将输入的任务列表分割进而创建子任务列表，每个子任务数量相同，这就是一个均分的问题，很简单，不多说，使用Python来做很简单，下面是两种做法的简单实现：
+
+    def test1(one_data_list,colnum=3):
+        '''
+        将一维的列表转化为矩阵形式
+        '''
+        res_list=[]
+        for i in range(0,len(one_data_list),colnum):
+            res_list.append(one_data_list[i:i+colnum])
+        return res_list
+
+
+    def test2(one_list,c=3):
+        '''
+        将一个长度为n的列表划分 ，每个子列表中包含m个元素
+        '''
+        return [one_list[i:i+c] for i in range(len(one_list)) if i%c==0]
+
+v简单测试一下：
+
+    one_data_list=[1,2,3,4,5,6,7,8,9]
+    print test1(one_data_list,colnum=3)
+    print test2(one_data_list,c=3)
+
+
+结果如下：
+
+    [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+————————————————
+版权声明：本文为CSDN博主「Together_CZ」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/Together_CZ/article/details/79820261
