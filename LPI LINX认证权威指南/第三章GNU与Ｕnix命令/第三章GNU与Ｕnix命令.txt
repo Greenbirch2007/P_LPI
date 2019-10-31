@@ -1521,8 +1521,151 @@ grep "File does not exist" error_log | awk '{print $13}' | sort > uniq -c | sort
 
 I/O 重定向
 
-p122
+
+shell 提供了两种I/O 重定向符号，分别为<与>
+
+
+cmd < file 
+cmd > file
+
+< 将文件接到命令的标准输入
+> 将命令的标准输出送到文件
+
+这两个符号改变了命令的I/O方向，合称为重定向(redirection)操作
+如同管道，I/O重定向也是shell的功能，
+程序本身不会察觉它们的输出被转到其他地方或是输入被换成其他来源
+
+
+把用less分而已查看结果，换成> file，就可以保存了
+
+
+grep "File does not exist" error_log | awk '{print $13}' | sort 
+|uniq -c | sort -nr > /tmp/hot_missedpages
+
+
+>会覆盖，  >>是追加新内容
+
+> >> 都只是改变了stdout的出处，stderr依然会指向屏幕
+
+nptdate 会取得网络时间来校正自己的系统时间。
+
+将stdout或stderr转入文件时，shell会事先创建或开启目标文件，
+然后才执行你的命令。
+如果将stdout与stderr都转入同一个文件，则会发生竞争现象(race condition)
+将无法得到确切的文件内容，甚至无法得到完整的信息
+
+如果要将stdout与stderr都送到同一个文件，
+
+ntpdate pool.ntp.org > /tmp/msg 2 >&
+
+
+先将ntpdate pool.ntp.org命令的stdout (FD 1)导入/tmp/msg
+然后将FD2(stderr)导入FD1所指之处(已经指向/tmp/msg文件了)
+使用m>&n 语法时次序很重要，它的意义是将m指向n所指之处
+
+
+ntpdate pool.ntp.org 2&>1 > /tmp/msg
+
+则stderr的信息依然会出现在屏幕上，因为bash是从左往右解释命令的，
+先将stderr指向stdout所指之处(屏幕)，然后才将stdout指向/tmp/msg文件
+
+当你使用I/O重定向来创建文件时，必须避免同一个文件及时输入文件又是输出文件
+
+不要直接改名字，
+
+正确的做法是将执行结果输出到另一个临时文件，然后再改名(移动)回来
+
+grep "stuff" file1 > file2
+mv file2 file1
+
+
+shell为程序默认的stdin是键盘，而你可以用<将它改成其他来源，通常是已含有适当内容的文件
+
+比如myreport.txt文件的内容邮递给jdean@example.com;
+
+mail -s "Daily Report" jdean@example.com < myreport.txt
+
+在不改变stdin的情况下，mail原本会在终端机(stdin)提示用户输入邮件内容，
+但由于我们将stdin指向myreport.txt文件，
+所以这次你无需输入任何信息,mail也不会出现任何提示
+
+
+常用的标准i/o重定向用
+
+bash 语法                   重定向功能
+cmd > file  将stdout(FD 1) 传送至file
+cmd 1> file  将stderr(FD 2) 传送至file
+cmd 2> file  将 stdout与stderr同时传送至file  
+cmd > file 2>&1  将stdout与stderr分别传送至不同的文件
+cmd > file1 2> file2    改从file接收stdin
+cmd < file   将stdout附加至file的末端
+cmd >> file  将stderr附加至file的末尾
+cmd 1>> file  将stdout与stderr同时附加至file的末端
+cmd 2>> file  将cmd1 的stdout与stderr都导入cmd2的stdin
+cmd >> file  2>&1 
+cmd1 | cmd2
+cmd1 2 >&1 | cmd2
 
 
 
 
+使用tee命令
+
+管道与i/o重定向可以改变命令的i/o流方向，却不能复制流。
+在屏幕上看到命令的执行情况，但同时又想将执行结果存入文件以便时候重复查看，可以利用tee来赋值I/O流
+
+tee
+
+语法
+	tee [options] files
+
+说明
+
+将读取字stdin输入流同时复制到stdout与所指定的文件，就像T型水管接头那样
+
+tee -a
+	将输出流附加到files文件尾之后，不覆盖原有呢哦荣能够
+
+范例
+
+管道命令是由cmd1,cmd2,cmd3串接而成，其执行结果最后会被存入file1
+
+cmd1 | cmd2 | cmd3 > file1
+
+除了错误信息之外，要正常的输出信息，因为它们不是被导入下一个命令就是被转入文件。
+
+cmd1 | tee file_cmd1 | cmd2 | cmd3 > file1
+
+
+课题103.5 :进程的创建，监控与撤销
+
+
+系统管理这的两项主要基本职责是文件管理与进程管理。
+
+进程管理(process management)的用意在于保持系统能够平稳运行。通常，进程启动后的环境准备，运作和终结都是以内核自动
+控管，无需管理者的介入
+
+有时，也需要终止或重启一些大消耗的系统资源进程。
+
+可能要发送某些特殊信号(signal)给运作中的进程，促使其进行某种预期中的动作
+比如，你的服务器上有一组不能停止运作的重要进程，而你修改了它的配置文件，这时候就可能需要
+送出能使其重新加载配置文件的信号
+
+
+进程(process) 是“运行中的程序”(running procedure)的计算单位
+对内核而言，于系统上运行的每一个"程序"(program)  ----无论是命令(command),应用程序(application)还是脚本(script)
+全都是“进程的组合”
+
+当登录系统时，自动启动的bash shell本身也是进程。你在shell中所键入的每个命令都会触发一个或多个进程，某些进程甚至会衍生
+出新进程，称为子进程(child process)
+
+1.生命周期(lifetime)
+	进程的整个执行期间称为"生命周期"(lifeme).用户于命令行触发的进程(例如，ls)
+	它们的生命周期多半相当短暂。但是对于提供公共服务的服务器进程(例如Apache web server)
+	它们的生命周期就相当长，甚至是在系统启动之后就开始，直到关机或管理这予以结束时为止。一般而言，有daemon或server称号的程序
+	几乎都是声明周期相当长的进程。
+	进程结束其生命周期的状态我们称之为die(死亡)，而能够促成死亡的工具就是kill.
+	因为它通常也能够传送不会造成进程死亡的其他信号(signal)给进程
+
+2.进程标识符(ProcessID ，简称PID)
+P127
