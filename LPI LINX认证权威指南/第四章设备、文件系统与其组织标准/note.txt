@@ -893,7 +893,476 @@ Linux的目录树由各磁盘上的各分区共同构成。即使是可插入式
 熟悉/etc/fstab文件的每个字段的功能
 
 挂载文件系统
-p189
+
+除了在启动期间自动挂载文件系统之外，也可以使用mount命令与系统运作期间挂载
+文件系统
 
 
+mount
+
+语法
+	mount [command_line_options] device
+	mount [command_line_options] directory
+	mount [command_line_options] device directory
+
+
+说明
+
+
+mount 将指定的文件系统(位于device) 挂载到目录数上的特定挂载点(directory)
+让用户可透过挂载点访问对应的文件系统。mount有两个必要参数(device与directory),
+若指定其中之一，mount会自动到/etc/fstab取得其余不足信息，
+但如果两个参数都提供了，则不参考/etc/fstab配置文件
+
+
+命令行选项
+
+
+mount -a 
+	挂载/etc/fstab配置文件所列的所有分区，但是有noauto选项的分区除外
+
+mount -h 
+	显示辅助说明信息
+
+mount -o mount options
+	挂载选项
+mount -r 
+	以只读模式挂载文件系统
+
+mount -t fstype
+	指定目录文件系统的类型。这项信息通常可以从/etc/fstab配置文件取得，
+	但是对于/etc/fstab没有记录的文件系统，则必须明确指出其文件
+	类型，内核才能以正确方式来访问文件系统
+
+
+
+mount -v
+	设定verbose(冗长) 模式
+
+
+mount -w
+	以可读可写模式挂载文件系统
+
+
+挂载选项
+
+挂载选项通常是定义与/etc/fstab配置文件的第四个字段，但是也可以用-o
+命令行选项来指定，不同类型的文件系统有各自适用的挂载选项，但是
+大多数选项是通用的，分别为：
+
+
+async
+	以异步模式访问文件系统。相反选项是sync
+
+auto	
+	使用-a命令行选项时可被自动挂载。相反选项是noauto
+
+defaults
+	相当于同时指定rw,suid,dev,exec,auto,nouser与async这些选项
+
+dev
+	解释文件系统上的字符(character) 或块(block) 特殊设备
+
+exec
+	允许执行挂载分区上所含的程序。相反选项是noexec
+
+
+noauto
+	使用-a命令行选项时不可被自动挂载。通常应用于插入式储媒
+
+noexec 
+	不允许执行所挂载的文件系统上的程序文件(通常是基于安全考虑)
+nosuid
+	不允许可执行文件的suid与sgid位的作用生效
+
+
+nouser
+	禁止一般用户挂载或卸载此文件系统。相反的选项是user与users
+
+ro
+	相当于 -r 命令行选项
+
+rw
+	与-w命令行选项等效
+
+suid
+	允许可执行文件的suid或sgid位的作用生效
+
+sync
+	以同步模式访问所挂载的文件系统。相反选项是async
+
+user
+	允许一般用户挂载此文件系统，但禁止其他人(一般用户)卸载它。
+	通常用于可插入式储媒
+
+
+users
+	允许任何用户挂载，卸载此文件系统
+
+
+user与users选项可让一般用户执行mount与umount命令。
+对于需要让终端机用户可挂载插入式储媒的系统，很重要
+
+文件系统类型
+
+Linux可挂载多种文件系统，所以mount命令必须知道所要挂载的文件系统的类型，
+此参数可能以命令行选项-t来指定，或定义于/etc/fstab配置文件的第三个字段，
+
+最常见的文件系统类型：
+
+
+1.ext2,ext3
+
+	Linux的标准文件系统
+
+
+2.reiserfs,xfs
+	具有变动记录功能(journal)的高效率文件系统，在服务器领域很流行
+
+3.msdos,vfat
+	msdo是MS-DOS FAT文件系统，限用"8.3"格式的文件名称，后者
+	全名为Virtual FAT,支持长文件名的加强版FAT文件系统
+
+4. iso9660,udf
+
+	ISO-9660 是CD-ROM的标准格式。UDF是packet-writing可刻录
+	的标准格式。
+
+
+5. nfs,smbfs
+	NFS服务器，Samba(Windows) 服务器
+
+6. swap
+	交换分区
+7. proc
+
+	Linux内核虚拟出来的一个文件系统，它不对应到任何磁盘分区。
+	主要用途是提供内核的运作状态，供系统软件访问(或改变)系统配置
+
+范例
+
+1.显示系统上当前所安装的文件系统
+
+mount 
+
+
+例子中，可以看到许多不同类型的文件系统，包括内核虚拟出来的proc,
+sysfs,udev,devpts,./dev/shm,还有实际对应到磁盘分区的/,/usr,/var
+/home,/tmp以及用户插入式储媒的/mnt.cdrom ,USB
+
+2.以只读模式将接在/dev/hdc的ATAPI CD-ROM 挂载到现有的/cdrom 目录
+
+mount -rt iso9660 /dev/hdc /odrom
+
+若没有明确指定-r选项，则mount会试着以R/W模式来挂载光驱，但由于光驱
+本身是只读设备，所以mount会提出警告信息，然后以只读模式来挂载光驱
+
+
+mount -t iso9660 /dev/hdc /mnt/odrom
+
+
+3.将在第一个软驱/dev/fd0(在MS-DOS操作系统中为A:)中的MS-DOS软盘挂载
+到现有的/floppy目录上
+
+mount -t msdos /dev/fd0 /floppy
+
+4. 假设挂载到/home与/opt 上的文件系统已经被卸载(为了进行定期维护工作)
+现在要将它们挂载回来
+
+mount -av
+
+使用mount -a时，它会安全地劈开先前已经挂载的文件系统
+
+
+卸载文件系统
+
+用于卸载文件系统的命令是umount,但文件系统被卸载之前，应该存储在该文件系统
+但仍留滞在内存缓冲区的数据会被全数写会磁盘-----这项作业称为"同步"(sync)
+然后才解除挂载点与文件系统的配对关系
+
+若将要被卸载的文件系统上仍有尚未关闭的文件或是有任何进程的工作目录
+仍留在该文件系统，umount将拒绝卸载
+
+
+对于已经被挂载的可插入式储媒(比如，软盘，ZipDrive,USB Drive。。。)
+若未先卸载就抽离储媒，要报错
+
+
+umount 
+语法
+	umount [options] device
+	umount [options] directory
+
+
+说明
+卸载位于device的文件系统或被挂载在directory的文件系统
+
+
+umount -a 自动卸载/etc/mtab所列的所有文件系统，本选项通常用于关机脚本。
+	/etc/mtab文件是由mount与umount自动维护，其中记录了现有
+	文件系统的挂载情况
+
+
+umount -t fstype
+	仅卸载fstyle 类型的文件系统
+
+
+范例
+
+1. 卸载/cdrom 目录上所挂载的/dev/hdc光驱
+
+umount /cdrom  或  umount /dev/hdc
+
+2. 卸载所有NFS文件系统
+
+
+umount -at nfs
+
+要知道mount,umount命令的用法，挂载点(mount point)的意义
+以及/etc/fstab中各字段的意义
+
+
+104.4  管理磁盘配额
+
+
+磁盘空间的管理很重啊哟，磁盘空间是有限的资源，而且消耗速度往往很大，
+在多用户操作系统上，不论磁盘空间有多充裕，用户都会填满它
+管理员要避免磁盘空间被太早填满。避免磁盘空间被耗光的最有效手段，
+就是实施磁盘配额(disk quota)政策，限制个别用户或组的磁盘空间耗用量
+
+
+典型的配额量通常小于文件系统的整体容量，以免用户或组耗用太多磁盘空间，
+理论上，对记录于/etc/fstab里的每个文件系统都可以限制其配额，
+实践中，只有会同时被多用户消耗的文件系统，例如,/home,/tmp
+才有限制配额的必要。
+限制/usr的配额没有太大以，因为一般用户不会将文件存放在该处
+
+
+配额的限制对象可以是/etc/passwd所列的每一位用户或是/etc/group所列的
+每一个组
+
+
+设定配额系统
+
+linux的配额系统由内核，文件系统,/etc/fstab配置文件以及相关工具组成。
+
+设定/home文件系统的用户与组的配额，而该文件系统位于/dev/sda6
+
+可以只启用用户的配额，组的配额或两者同时启用
+
+
+注意
+
+配额功能需要Linux内核的支持。几乎所有Linux distribution随附的内核都支持
+配额，但如果你用的内核刚好没有，需要重新编译一个新内核。
+Linux内核的编译与安装是102的考试范围
+要想确认你用的Linux内核是否支持配额，最简单的方法是查看dmesg输出的信息
+是否含有"quota"字符串
+
+dmesg | grep -i quota
+
+
+1. 编辑 /etc/fstab配置文件，在需要配额限制的文件系统(例如/home)的挂载选项
+栏补上 userquota 或grpquota
+
+
+userquota表示该文件系统要对"个别用户" 实施丿和管理
+grpquota 表示配额管理的对象是"组" 。同时标注这两个选型，
+表示同时这两种对象实施配额管理
+
+2. 在需要管理配额的文件系统顶层(例如/home)创建quota.user 与
+quota.group文件，并将它们设定成只有root可以访问、
+
+touch /home/quota.user /home/quota.group
+
+
+chmod 600 /home/quota.user /home/quota.group
+
+
+如果想让你一般用户也能够查看自己的属组的配额状况，quota.group文件的访问
+模式应该是644或640 ，而非600
+quota.user 与quota.group这两个文件合称"配额数据库"，它们的作用是记录该文件系统
+的配额状态，其中quota.user记录个别用户的配额，而组的配额是记录在quota.group中
+每个有配额管理的文件系统都有它们自己的配额数据库
+
+3. 使用edquota设定配额
+
+4. 执行quotacheck，将配额数据库编译成二进制格式：
+
+quotacheck -avug
+
+还没有设定任何配置限制。限制可以用ls查看配额数据库文件
+
+
+ls -al /home/quota.*
+
+有些系统的配额数据库是放在其他文件中的
+
+ls -l aquota.*
+
+5. 执行quotaon,让配额限制开始生效
+
+
+quotaon -a
+
+
+6. 设法让系统在启动时自动启动配额系统。你的系统上应该有现成的rc.scripts可用
+(/etc/rc.d/rc.sysinit 或/etc/init.d/quota)
+
+用grep 对/etc/rc.d或/etc/init.d/用户下的文件搜索"quota"字样
+应该可以帮助你判断哪一个脚本有启动配额系统的功能。如果
+没有，写一个适合你系统的rc.script
+
+if [-x /sbin/quotacheck]
+then
+	echo "Checking quotas."
+	/sbin/quotacheck -avug
+	echo "Done."
+fi
+if [-x /sbin/quotaon]
+then
+	echo "Turning on quotas."
+	/sbin/quotaon -avug
+fi
+
+
+7. 设法让系统定期执行quotacheck,使其自动更新配额数据库。典型做法是写一个
+	cron script,放在每日或每周例行工作的目录下(/etc/corn.daily
+	或/etc/cron.weekly)
+
+
+#! /bin/bash
+/sbin/quotacheck -avug
+
+
+也可以(使用crontab -e命令)将 /sbin/quotacheck写入root的crontab文件
+
+使其定期执行:
+03 ** 0 /sbin/quotacheck -avug
+
+现在，挂载在/home的文件系统已经可以为每个用户与每个组实施配额管理并汇报
+配额状况
+
+要对配额系统的运作有个整体概念，相关工具的功能。
+配额是针对"个别文件系统"(per-filesystem basis)来设置的
+
+
+配额限制
+
+对于每个文件系统，都可以实施5种配额限制。配额量的计算单位是”磁盘块“(disk block)
+通常一个块的大小等于1024bytes
+
+个别用户的硬性限制(per-user hard limit)
+	个别用户可拥有的磁盘容量的绝对上限。若超过此限制，用户将无法继续吸入新数据到
+	磁盘
+
+个别用户的软性限制(per-user soft limit)
+	个别用户可以自由运用而不会出现任何警告信息的容量限制。若耗用量虽超过次子安置
+	但尚未超过硬性限制。则用户仍可写入新数据，但会收到警告信息
+
+个别组的硬性限制(per-group hard limit)
+	个别组可拥有的磁盘容量的绝对上限。若到达此限制，组成员将无法继续
+	吸入新数据到磁盘，即使个别用户还有没用完的配额
+
+
+个别组的软性限制(per-group sort limit)
+	个别组可以自由运用而不会出现任何警告信息的容量限制。若耗用量虽
+	超过此限制但尚未超过硬性限制，则组成员仍可以写入新数据，
+	但是所有成员都会收到警告信息
+
+
+宽限期(grace period)
+	一旦数据量到达了软性限制，相关用户或组就开始进入"宽限期"。
+	在这期间，用户或组必须清理文件，将耗用量降到软性限制之下，	
+	若已经超过宽限期但还没有腾挪出足够空间，则软性限制会
+	变成硬性限制。
+	宽限期的单位可以是months,weeks,days,hours,minutes,seconds
+	典型的宽限期是7天(7 days)
+
+
+设定配额的命令是edquota
+
+
+注意
+
+当耗用量超过硬性限制或是软性限制的宽限期已过，而耗用量还没有降到
+软性限制之下，则写入磁盘的数据可能不完整。
+超过限制的部分会被硬生生截断，留下不完整的文件。倘若磁盘
+写入操作是发生在shell的非交互模式下，正在执行shell script,
+则用户可能会错过警告信息，而应用程序或shell script会提出
+磁盘空间已满或文件有写保护(write-protected)之类的信息
+
+
+管理配额的工具
+
+
+linux提供了一套可用来管理，显示与汇报文件系统配额的工具。
+
+quota
+
+语句
+	quota [-u] [options] user
+	quota -g [options] group
+
+
+说明
+
+
+显示user或group的配额限制。若不指定-u与-g选项，quota默认会显示用户
+个人的配额情况(相当于-u选项)。只有root可以同时使用-u与user来查看
+其他用户的配额情况，一般用户只可查看的配额限制或以-g与group来
+查看所属组的限制
+
+常用选项
+
+quota - q
+	安静模式。只有在超过配额时才会显示信息
+
+quota -v
+	详尽模式。即使未配置任何空间，也会显示信息
+
+
+范例
+
+1. 以root身份查看用户bill的配额现况
+
+quota -uv bill
+
+
+用户bill在/dev/sda6的软性限制(10000个块)几乎超过，而相应的
+硬性限制有10200个块，grace字段(宽限期)并未显示任何值，是因为
+尚未超过软性限制
+
+
+2. 以用户joe的身份查看自己所属组finance的配额
+
+quota -gv finance
+
+finance组的空间耗用量已经超过其软性限制(990个块)，而且正好
+用到硬性限制的100个块(写入第1000个块的操作或许并未完成)
+grace字段的原始值是7,而限制只剩下6天了
+这表示从超过软性限制当天算起，已经过去1天
+
+
+
+quotaon
+
+语法
+	quotaon [option] [filesystem]
+	quotaon [options] -a
+
+说明
+开始对指定的文件系统实施预先设定的配额限制
+
+常用选项
+
+quotaon -a
+	对/etc/fstab配置文件中有资格的所有文件系统启动配额限制。
+	所谓"有资格"是指文件系统必须是可读可写的，
+	而且挂载选项字段有usrquota或/且grpquota选项
+	启动脚本通常会以quotaon -a 命令来让配额系统生效
+
+
+quotaon -g 
+p200
 
