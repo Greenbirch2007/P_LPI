@@ -1364,5 +1364,210 @@ quotaon -a
 
 
 quotaon -g 
-p200
+	使组配额限制生效。使用-a选项时无需指定本选项，因为-a是更广义的-g
+quotaon -u
+	让用户配额限制生效。这是默认选项
+quotaon -v
+	详细显示每个文件系统的配额情况
 
+
+范例
+
+1. 让/etc/fstab中定义了配额的文件都生效
+
+
+quotaon -av
+
+2. 仅让/home 文件系统的组配额限制生效
+
+
+quotaon -gv /home
+
+qutoaoff
+
+语法
+
+	quotaoff [options] [filesystems]
+	quotaoff [options] -a
+
+说明
+让指定的文件系统的配额限制失效
+
+常用选项
+
+
+quotaoff -a
+	关闭/etc/fstab配置文件中定义过的所有文件系统的配额限制
+
+quotaoff -g
+	关闭组配额限制。使用-a选项时就不必使用本选项
+
+
+quotaoff -u
+	关闭用户配额限制，这是默认值
+quotaoff -v
+	详细显示每个文件系统的配额情况
+
+
+范例
+1. 取消所有配额限制
+
+
+quotaoff -av
+
+
+quotacheck
+
+语法
+	quotacheck [options] filesystems
+	quotacheck [options] -a
+
+
+说明
+
+检查文件系统并编译配额数据库。这是Linux配额系统中一个重要组件，
+应该以cron定期指定quotacheck -a命令
+
+常用选项
+
+quotacheck -a 
+	检查/etc/fstab配置文件定义的所有文件系统的配额。
+	若挂载选项中同时出现usrquota与grpquota，则用户
+	与组的配额都会被检查并重新编译
+
+quotacheck -g group
+	仅编译特定组信息
+quotacheck  -u user
+	仅编译特定用户的信息(默认行为)
+
+quotacheck -v 
+	详细显示执行过程与进度
+
+
+范例
+
+1.初始化所有的配额文件
+
+quotaoff -a
+quotacheck -aguv
+
+
+进行更新之前应该先关闭配额系统，等完成检查之后再重新开启
+
+
+2.在配额限制有效期间更新内存中对于/home 的用户的配额数据
+
+
+quotacheck -v /home
+
+
+edquota
+
+语法
+
+	edquota [-p proto-user] [options] names
+	equota [options] -t
+
+
+说明
+
+修改用户或组配额，edquota是一个交互式命令，它会启动文本编辑器
+(取决于EDITOR或VISUAL 环境变量，若没有，则默认使用vi)
+让你编辑一个临时文件。当你保存文件并离开编辑器之后,edquota
+会将临时文件存入用户或组的配额配置文件
+
+
+此命令的第一种形式中，names是一连串以空格隔开的用户或组名称，代表
+要被修改的
+配额限制对象。如果使用-p选项，则复制proto-user(用户或组)
+的配额配置到names(用户或组名单)，而不会启动编辑器
+
+
+第二种形式(有-t选项) 让你以交互方式编辑各文件系统的软性限制
+
+
+常用选项
+
+edquota -g	
+	变更组配额。names会被假设全为组名称，而非用户名称(即使同时指定
+	-u选项也一样)
+
+edquota -p proto-user
+
+	以proto-user所代表的用户或组配额为原型，复制到names所列
+	每位用户或组。此选项常用来同时初始化许多用户或组的配额
+
+
+edquota -t
+	变更软性限制。可使用sec(onds),min(utes),hour(s),
+	week(s)以及month(s)等时间单位
+
+
+edquota -u
+	变更用户配额，这是默认行为。如果同时指定了-g选项，则本选项
+	自动失效。
+
+
+范例
+
+1. 修改用户jdoe的配额限制
+
+edquota -u jdoe
+
+其中，jdoe在/dev/sda9上的软性限制wei 99900个块，硬性限制为100000个块，
+没有数量(inode)的限制。它在/dev/hda1 上没有任何限制
+
+
+2.修改用户于所有文件系统的软性限制
+
+edquota -tu
+
+用户的空间宽限期被设定为7天，文件数量宽限期被谁定为3天
+
+
+requota
+
+
+语法
+	requota [options] filesystems
+	requota -a [options]
+
+
+说明
+
+
+汇报配额状态。命令的第一种形式会汇报每位用户与组于特定filesystems的配额
+限制总表，第二种形式则汇报所有文件系统的配额总表
+
+
+只有root管理者可使用此命令，除非配额数据库被设成任何人都可以读取。
+管理者常用此命令来查看edquota所建立的配额限制，以及个用户所耗用的
+文件数与磁盘空间
+
+
+常用选项
+
+requota -a
+	汇报/etc/fstab配置文件中所有可擦写的文件系统的配额状态。对于挂载
+	选项中含有usrquota或grpquota选项中的文件系统，则汇报用户或组在
+	该文件系统的配额限制
+
+requota -g	
+	汇报组的配额状态
+
+requota -u
+	汇报用户的配额状态(默认动作)
+requota -v
+	在输出信息第一行加上字段名称
+
+
+范例
+
+
+1.汇报/home的用户配额
+
+requota -v /home
+
+
+104.5 文件访问权限
+p205
