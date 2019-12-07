@@ -117,3 +117,243 @@ modinfo -d 显示关于模块本身的叙述
 modinfo -p 显示模块所支持的参数以及参数的类型
 
 modprobe
+
+  modprobe [options] module [symbol=value...]
+
+
+modproble是insmod与rmmod的综合体，额外加强了自动满足依赖关系的功能。
+此外，modprobe不仅能加载单一模块，甚至能加载特定目录下的所有模块。
+modproble -r,可以视为加强版的rmmod
+
+
+加载模块时，可以附加选择性的symbol=value参数
+若要加载的模块需要用到其他模块，则那些相关模块会被先加载。
+modprobe是依据modules.dep文件来决定模块之间的依赖关系，此文件放在模块目录的顶层(例如，/lib/modules/2.x.x/modules.dep)
+
+所有操作模块的命令都需要root管理者的权限才能执行，modprobe也例外
+
+modprobe -a 加载全部模块。 modprobe -t tag使用时，"全部"是限定到tag所指的目录。
+想驱动特定类型的硬件，选项让modprobe逐一尝试加载该类硬件的所有模块，直到记载其中一个位置
+
+若打算加载网卡的驱动程序，可用modprobe -at net逐一尝试j加载 /lib/module/kernel-version/kernel/drivers/net/目录下
+的所有模块，直到成功加载一个模块或已经尝试过所有模块为止
+
+modprobe -c 
+	显示完整的模块配置，包括默认参数值以及在/etc/modules.conf(或/etc/conf.modules,看你的系统版本而定)
+找到的额外参数
+modprobe -c 不搭配任何其他选项一起使用
+modprobe -l
+	列出模块。搭配-t tag使用时，只列出tag所代表的目录下的模块。
+	例如，modprobe -lt net会列出/lib/modules/kernel_version/kernel/net目录下(包括其子目录)的所有目模块
+
+modprobe -r
+	卸载模块，作用类似于rmmod,但是允许一次指定多个模块
+
+modprobe -t tag
+	尝试加载tag所指目录下的各个模块，直到成功加载其中之一或尝试过所有模块位置。
+	modprobe -t tag 通常用来“探测”特定类型的硬件(如网卡)
+在2.2版内核中，tag是/lib/modules/kernel_version/下的子目录名称
+在2.4半内核中，搭配-a选项时，tag必须是完整的目录名称；
+
+modprobe会先加载msdos模块所需的fat模块，然后才加载msdos模块本身
+
+依据modules.dep所记录的依赖关系先自动加载fat模块，然后才加载指定的msdos模块。
+模块的依赖关系记录于modules.dep配置文件中：
+
+modprobe就是依据此文件来解决依赖关系。不必自己编辑modules.dep配置文件，
+因此该文件实在编译模块的过程中自动产生的
+
+列出所有可用的模块
+
+modprobe -l
+
+
+设定模块采纳数
+
+某些硬件的驱动模块可接受一些额外参数，比如指定IRQ,DMA,I/O
+端口等硬件资源。在加载模块之前或卸载模块之后，也可能需要后处理
+一些事前准备工作
+额外控制是定义于/etc/modlues/conf配置文件(modprobe会读取此文件)
+
+
+此文件可能包含下列信息
+
+# ....(注释)
+	以井字号(#)开头的行以及任何空白行都会被忽略
+
+keep
+
+	如果keep出现任何path指令之前，则默认路径会保留并
+	加到任何命令行所指定的路径
+
+depfile=full_path	
+	以full_path代替模块依赖文件(modules.dep)的默认
+	位置。例如，depfile=/lib/modules/2.4.30/modules.dep
+
+path=path_directory
+
+	定义模块的搜索路径
+
+options modules optname1 =val1 optname2=val2
+	设定module的选项。也可以在modprobe命令行直接指定模块选项。
+对于同一个模块，modprobe优先采用命令行指定的选项。
+这里的module是没有扩展名(.o或.ko)的单一模块名称。
+模块选项是以optname=value的形式给定，其中的optname是该
+模块所能接受的参数名称(可用modinfo -p探知这些参数)
+options ne2k-pci full_duplex =1
+
+alias  赋予特定模块一个通用的名称
+
+pre-install module command
+	加载module之前先执行指定的shell command,
+	在加载pcmcia_core模块之前，必须先启动PCMCIA服务
+
+	pre-install pcmcia_core /etc/init.d/pcmcia start
+
+
+install module command
+	在加载module时，使用指定的shell command 来代替默认的模块加载命令
+
+post-install module command
+
+	要求加载module之后执行指定的shell command
+
+pre-remove module command 
+	在移除module之前先执行指定的shell command
+remove module command
+	使用指定的shell command代码默认的模块卸载模块
+
+post-remove module command
+
+	在移除module之后执行的所指定的shell command
+
+较新版本的linux disribution的/etc/modules/conf配置文件是由modules-update
+自动产生的，该文件会将/etc/modules.d/目录下的各配置文件
+整合成一个完整的/etc/modules.conf。对于这类系统，不应该直接修改/etc/modules.conf,
+而是应该修改/etc/modules.d/目录下的文件，然后再执行modules-update 来更新/etc/modules.conf
+
+模块依赖文件
+
+模块之间的依赖关系记录在一个模块依赖文件(module dependency file)中，其位置是在/lib/modules/kernel-version/modules.dep
+modeprobe 就是依据此文件来判断模块之间的相关性，借此算出正确的模块加载顺序。
+
+在modules.dep文件中的依赖关系语句
+
+这表示msdos模块需要用到fat模块索引应该也加载fat,然后才可加载msdos模块
+
+可用于系统的所有模块会全列在modules.dep文件中。所有模块都是以其完整路径与完整文件名(包括.o或.ko)来表示。可以单独
+存在而不需其他模块配合的模块，只会出现模块文件名称，冒号后的dependency是空的。
+使用modprobe加载特定模块时，它会先加载每一个depnendency,最后才加载所指定的模块
+
+modules.dep文件里的依赖关系记录必须符合现况，才能确保modprobe的顺利运作。如果模块之间的依赖关系有任何关系，却
+没有跟着修改modules.dep,则modprobe可能会失败，因为它无法满足依赖关系。因此，在每次开机时，
+modules.dep文件就会被重建一次。
+在大部分的Linux中，应该可以在rc.sysinit(或其他等效脚本)看到调用depmod -a命令
+
+depmod -a会重建modules.dep文件并覆盖掉旧文件。
+只要有任何模块依赖关系发生改变，你都可以自己动手运行此程序，不必非等到下次重新开机不可
+
+modules.dep文件
+
+
+重新新内核
+
+linux是开源操作系统，linux内核是以源程序的形式来发布的，这表示任何人都可以为自己的系统编译一个专用的linux内核，使其将硬件功能
+发挥到极致。
+
+关于内核的基础只是
+
+编译出自己的新内核
+
+内核版本
+
+不管规模大小，几乎任何软件项目都有一套版本编码规则，
+而且大多数是采用数字编码。
+linux内核也不例外，其版本编码规则如下：
+major.minor.patchlevel
+
+主版本号(major release)
+
+次版本号(minor release)
+
+	次版本号代表显著的改变与加强，值得以新号码来表示。Linux
+	内核的版本有两种：
+	偶数版，奇数版
+
+修正版次(patch level)
+一般，使用修正版次最高的内核应该是最保险的
+
+必备工具与软件
+
+编译一个专属内核所需要的开发工具包括C编译器，汇编器(assembler)
+链接器(linker)和make工具程序。通常，这些工具应该已经在你的系统中了
+
+C编译器是一种程序，能将C源代码转换成系统可用的二进制形式。
+GNU C Compiler(gcc)是大多数linux系统上的标准编译器。
+至于assembler和linker则是编译内核的某些过程所需的工具
+
+编译程序是由make所控制的，它依据Makefile文件所记录的
+依赖关系，自动以正确顺序和适当的参数来执行编译命令
+
+编译工具之外，最红要的是内核源代码
+
+kernel-source 
+	此包包含内核与模块的C语言源代码
+
+kernel-headers
+	此包包含内核的C语言图文件(header file)
+	大部分的C程序将所需的数据结构与常数另外定义在头文件
+	中，内核程序也不例外。在2.4版之后的内核中，头文件
+	不再另外封装成一个独立包，而是一并封装在kernel-source包内
+
+
+就大多数系统而言，内核的源代码是放在/usr/src/linux/目录下，
+/usr/src/linux/多半只是一个软链接，连到正在使用的内核版本。
+
+查看内核系统
+ls -l /usr/src
+
+在一个安装了多个版本内核的系统上，其/usr/src/目录如下
+
+/usr/src/linux是一个内核目录的软链接，让/usr/src/linux
+指向正确版本的内核源代码树。
+因为许多跟内核有关的软件都假设内核源目录树是位于/usr/src/linux
+
+要知道kernel source tree的存放位置(通常是/usr/src/linux)
+
+
+编译一个专属内核
+
+假设开发环境都已经具备，包括C编译器，make工具，内核源代码(包括头文件)
+都已经装好。在编译与安装内核的过程中，都是以root身份进行
+
+
+创建内核配置
+
+创建内核的第一步是创建一个.config文件，此文件含有内核的选项，
+像是文件系统，SCSI,网络功能支持等
+许多功能可以直接编译到内核，也可以编译成模块
+对于每一个配置选项，有三种选择
+
+1.编译仅内核(回答"yes")
+2. 编译成模块(回答"m")
+3. 不想要该功能(回答"no")
+
+
+某些功能是有关联的，你的选择会影响到相关功能
+若决定要让内核支持SCSI，一些与SCSI相关的驱动程序与功能
+也会跟着浮现，要求做出选择。你所作出的所有选择都会被存如/usr/src/linux/.config
+它是一个普通的文本文件，对于每一个选项，都有一个对应的shell变量，这些shell变量的
+值(y,n,m)就是所作出的选择
+
+
+在开始之前，先将当前的工作目录切换到 kernel source tree的等车呢过
+
+cd /usr/src/linux
+
+linux开发者有三种产生.config方法
+1.make config :适用于只有文字显示能力的终端机
+2. make menuconfig : 适用于支持curses library TUI环境的文字终端机
+3. make xconfig:适用于 X Window System
+
+make config
